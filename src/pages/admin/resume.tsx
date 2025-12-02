@@ -1,245 +1,221 @@
 import DataTable from "@/components/client/data-table";
-import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import { IResume } from "@/types/backend";
-import { ActionType, ProColumns, ProFormSelect } from '@ant-design/pro-components';
-import { Space, message, notification } from "antd";
-import { useState, useRef } from 'react';
-import dayjs from 'dayjs';
-import { callDeleteResume } from "@/config/api";
-import queryString from 'query-string';
-import { fetchResume } from "@/redux/slice/resumeSlide";
+import {
+  ActionType,
+  ProColumns,
+  ProFormSelect,
+} from "@ant-design/pro-components";
+import { Space, Popconfirm } from "antd";
+import { useState, useRef } from "react";
+import dayjs from "dayjs";
+import queryString from "query-string";
 import ViewDetailResume from "@/components/admin/resume/view.resume";
 import { ALL_PERMISSIONS } from "@/config/permissions";
 import Access from "@/components/share/access";
 import { sfIn } from "spring-filter-query-builder";
-import { EditOutlined } from "@ant-design/icons";
+import { EditOutlined, DeleteOutlined } from "@ant-design/icons";
+import { useResume } from "@/hooks/useResume";
 
 const ResumePage = () => {
-    const tableRef = useRef<ActionType>();
+  const [dataInit, setDataInit] = useState<IResume | null>(null);
+  const [openViewDetail, setOpenViewDetail] = useState<boolean>(false);
+  const tableRef = useRef<ActionType>();
 
-    const isFetching = useAppSelector(state => state.resume.isFetching);
-    const meta = useAppSelector(state => state.resume.meta);
-    const resumes = useAppSelector(state => state.resume.result);
-    const dispatch = useAppDispatch();
+  const [params, setParams] = useState({
+    current: 1,
+    pageSize: 10,
+    sort: "updatedAt,desc",
+    filter: "",
+  });
 
-    const [dataInit, setDataInit] = useState<IResume | null>(null);
-    const [openViewDetail, setOpenViewDetail] = useState<boolean>(false);
+  const queryStr = queryString.stringify(
+    {
+      page: params.current,
+      size: params.pageSize,
+      sort: params.sort,
+      filter: params.filter || undefined,
+    },
+    { skipNull: true, skipEmptyString: true }
+  );
 
-    const handleDeleteResume = async (id: string | undefined) => {
-        if (id) {
-            const res = await callDeleteResume(id);
-            if (res && res.data) {
-                message.success('Xóa Resume thành công');
-                reloadTable();
-            } else {
-                notification.error({
-                    message: 'Có lỗi xảy ra',
-                    description: res.message
-                });
-            }
-        }
+  const { resumes, meta, isFetching, deleteResume, isDeleting } =
+    useResume(queryStr);
+
+  const handleDeleteResume = async (id: string | undefined) => {
+    if (id) await deleteResume(id);
+  };
+
+  const handleTableChange = (pagination: any, filters: any, sorter: any) => {
+    let sortBy = "";
+    if (sorter && sorter.status)
+      sortBy = sorter.status === "ascend" ? "status,asc" : "status,desc";
+    if (sorter && sorter.createdAt)
+      sortBy =
+        sorter.createdAt === "ascend" ? "createdAt,asc" : "createdAt,desc";
+    if (sorter && sorter.updatedAt)
+      sortBy =
+        sorter.updatedAt === "ascend" ? "updatedAt,asc" : "updatedAt,desc";
+    if (!sortBy) sortBy = "updatedAt,desc";
+
+    let filterStr = "";
+    if (filters?.status && filters.status.length > 0) {
+      filterStr += `${sfIn("status", filters.status)}`;
     }
 
-    const reloadTable = () => {
-        tableRef?.current?.reload();
-    }
+    setParams({
+      current: pagination.current || 1,
+      pageSize: pagination.pageSize || 10,
+      sort: sortBy,
+      filter: filterStr,
+    });
+  };
 
-    const columns: ProColumns<IResume>[] = [
-        {
-            title: 'Id',
-            dataIndex: 'id',
-            width: 50,
-            render: (text, record, index, action) => {
-                return (
-                    <a href="#" onClick={() => {
-                        setOpenViewDetail(true);
-                        setDataInit(record);
-                    }}>
-                        {record.id}
-                    </a>
-                )
-            },
-            hideInSearch: true,
-        },
-        {
-            title: 'Trạng Thái',
-            dataIndex: 'status',
-            sorter: true,
-            renderFormItem: (item, props, form) => (
-                <ProFormSelect
-                    showSearch
-                    mode="multiple"
-                    allowClear
-                    valueEnum={{
-                        PENDING: 'PENDING',
-                        REVIEWING: 'REVIEWING',
-                        APPROVED: 'APPROVED',
-                        REJECTED: 'REJECTED',
-                    }}
-                    placeholder="Chọn level"
-                />
-            ),
-        },
-
-        {
-            title: 'Job',
-            dataIndex: ["job", "name"],
-            hideInSearch: true,
-        },
-        {
-            title: 'Company',
-            dataIndex: "companyName",
-            hideInSearch: true,
-        },
-
-        {
-            title: 'CreatedAt',
-            dataIndex: 'createdAt',
-            width: 200,
-            sorter: true,
-            render: (text, record, index, action) => {
-                return (
-                    <>{record.createdAt ? dayjs(record.createdAt).format('DD-MM-YYYY HH:mm:ss') : ""}</>
-                )
-            },
-            hideInSearch: true,
-        },
-        {
-            title: 'UpdatedAt',
-            dataIndex: 'updatedAt',
-            width: 200,
-            sorter: true,
-            render: (text, record, index, action) => {
-                return (
-                    <>{record.updatedAt ? dayjs(record.updatedAt).format('DD-MM-YYYY HH:mm:ss') : ""}</>
-                )
-            },
-            hideInSearch: true,
-        },
-        {
-
-            title: 'Actions',
-            hideInSearch: true,
-            width: 100,
-            render: (_value, entity, _index, _action) => (
-                <Space>
-                    <EditOutlined
-                        style={{
-                            fontSize: 20,
-                            color: '#ffa500',
-                        }}
-                        type=""
-                        onClick={() => {
-                            setOpenViewDetail(true);
-                            setDataInit(entity);
-                        }}
-                    />
-
-                    {/* <Popconfirm
-                        placement="leftTop"
-                        title={"Xác nhận xóa resume"}
-                        description={"Bạn có chắc chắn muốn xóa resume này ?"}
-                        onConfirm={() => handleDeleteResume(entity.id)}
-                        okText="Xác nhận"
-                        cancelText="Hủy"
-                    >
-                        <span style={{ cursor: "pointer", margin: "0 10px" }}>
-                            <DeleteOutlined
-                                style={{
-                                    fontSize: 20,
-                                    color: '#ff4d4f',
-                                }}
-                            />
-                        </span>
-                    </Popconfirm> */}
-                </Space>
-            ),
-
-        },
-    ];
-
-    const buildQuery = (params: any, sort: any, filter: any) => {
-        const clone = { ...params };
-
-        if (clone?.status?.length) {
-            clone.filter = sfIn("status", clone.status).toString();
-            delete clone.status;
-        }
-
-        clone.page = clone.current;
-        clone.size = clone.pageSize;
-
-        delete clone.current;
-        delete clone.pageSize;
-
-        let temp = queryString.stringify(clone);
-
-        let sortBy = "";
-        if (sort && sort.status) {
-            sortBy = sort.status === 'ascend' ? "sort=status,asc" : "sort=status,desc";
-        }
-
-        if (sort && sort.createdAt) {
-            sortBy = sort.createdAt === 'ascend' ? "sort=createdAt,asc" : "sort=createdAt,desc";
-        }
-        if (sort && sort.updatedAt) {
-            sortBy = sort.updatedAt === 'ascend' ? "sort=updatedAt,asc" : "sort=updatedAt,desc";
-        }
-
-        //mặc định sort theo updatedAt
-        if (Object.keys(sortBy).length === 0) {
-            temp = `${temp}&sort=updatedAt,desc`;
-        } else {
-            temp = `${temp}&${sortBy}`;
-        }
-
-        // temp += "&populate=companyId,jobId&fields=companyId.id, companyId.name, companyId.logo, jobId.id, jobId.name";
-        return temp;
-    }
-
-    return (
-        <div>
-            <Access
-                permission={ALL_PERMISSIONS.RESUMES.GET_PAGINATE}
+  const columns: ProColumns<IResume>[] = [
+    {
+      title: "Id",
+      dataIndex: "id",
+      width: 50,
+      render: (text, record, index, action) => {
+        return (
+          <a
+            href="#"
+            onClick={() => {
+              setOpenViewDetail(true);
+              setDataInit(record);
+            }}
+          >
+            {record.id}
+          </a>
+        );
+      },
+      hideInSearch: true,
+    },
+    {
+      title: "Trạng Thái",
+      dataIndex: "status",
+      sorter: true,
+      valueType: "select",
+      valueEnum: {
+        PENDING: { text: "PENDING" },
+        REVIEWING: { text: "REVIEWING" },
+        APPROVED: { text: "APPROVED" },
+        REJECTED: { text: "REJECTED" },
+      },
+      renderFormItem: (item, props, form) => (
+        <ProFormSelect showSearch mode="multiple" allowClear {...props} />
+      ),
+    },
+    {
+      title: "Job",
+      dataIndex: ["job", "name"],
+      hideInSearch: true,
+    },
+    {
+      title: "Company",
+      dataIndex: "companyName",
+      hideInSearch: true,
+    },
+    {
+      title: "CreatedAt",
+      dataIndex: "createdAt",
+      width: 200,
+      sorter: true,
+      render: (text, record) => (
+        <>
+          {record.createdAt
+            ? dayjs(record.createdAt).format("DD-MM-YYYY HH:mm:ss")
+            : ""}
+        </>
+      ),
+      hideInSearch: true,
+    },
+    {
+      title: "UpdatedAt",
+      dataIndex: "updatedAt",
+      width: 200,
+      sorter: true,
+      render: (text, record) => (
+        <>
+          {record.updatedAt
+            ? dayjs(record.updatedAt).format("DD-MM-YYYY HH:mm:ss")
+            : ""}
+        </>
+      ),
+      hideInSearch: true,
+    },
+    {
+      title: "Actions",
+      hideInSearch: true,
+      width: 100,
+      render: (_value, entity) => (
+        <Space>
+          <EditOutlined
+            style={{ fontSize: 20, color: "#ffa500" }}
+            onClick={() => {
+              setOpenViewDetail(true);
+              setDataInit(entity);
+            }}
+          />
+          <Access permission={ALL_PERMISSIONS.RESUMES.DELETE} hideChildren>
+            <Popconfirm
+              placement="leftTop"
+              title={"Xác nhận xóa resume"}
+              description={"Bạn có chắc chắn muốn xóa resume này ?"}
+              onConfirm={() => handleDeleteResume(entity.id)}
+              okText="Xác nhận"
+              cancelText="Hủy"
+              okButtonProps={{ loading: isDeleting }}
             >
-                <DataTable<IResume>
-                    actionRef={tableRef}
-                    headerTitle="Danh sách Resumes"
-                    rowKey="id"
-                    loading={isFetching}
-                    columns={columns}
-                    dataSource={resumes}
-                    request={async (params, sort, filter): Promise<any> => {
-                        const query = buildQuery(params, sort, filter);
-                        dispatch(fetchResume({ query }))
-                    }}
-                    scroll={{ x: true }}
-                    pagination={
-                        {
-                            current: meta.page,
-                            pageSize: meta.pageSize,
-                            showSizeChanger: true,
-                            total: meta.total,
-                            showTotal: (total, range) => { return (<div> {range[0]}-{range[1]} trên {total} rows</div>) }
-                        }
-                    }
-                    rowSelection={false}
-                    toolBarRender={(_action, _rows): any => {
-                        return (
-                            <></>
-                        );
-                    }}
-                />
-            </Access>
-            <ViewDetailResume
-                open={openViewDetail}
-                onClose={setOpenViewDetail}
-                dataInit={dataInit}
-                setDataInit={setDataInit}
-                reloadTable={reloadTable}
-            />
-        </div >
-    )
-}
+              <span style={{ cursor: "pointer", margin: "0 10px" }}>
+                <DeleteOutlined style={{ fontSize: 20, color: "#ff4d4f" }} />
+              </span>
+            </Popconfirm>
+          </Access>
+        </Space>
+      ),
+    },
+  ];
+
+  return (
+    <div>
+      <Access permission={ALL_PERMISSIONS.RESUMES.GET_PAGINATE}>
+        <DataTable<IResume>
+          actionRef={tableRef}
+          headerTitle="Danh sách Resumes"
+          rowKey="id"
+          loading={isFetching}
+          columns={columns}
+          dataSource={resumes}
+          onChange={handleTableChange}
+          scroll={{ x: true }}
+          pagination={{
+            current: meta.page,
+            pageSize: meta.pageSize,
+            showSizeChanger: true,
+            total: meta.total,
+            showTotal: (total, range) => (
+              <div>
+                {" "}
+                {range[0]}-{range[1]} trên {total} rows
+              </div>
+            ),
+          }}
+          rowSelection={false}
+          toolBarRender={() => []} // Không có nút tạo mới ở trang này
+        />
+      </Access>
+      <ViewDetailResume
+        open={openViewDetail}
+        onClose={setOpenViewDetail}
+        dataInit={dataInit}
+        setDataInit={setDataInit}
+        reloadTable={() => {
+          // Khi update status xong, hook tự invalidate,
+          // ta không cần làm gì thêm, hoặc có thể reset params nếu muốn
+        }}
+      />
+    </div>
+  );
+};
 
 export default ResumePage;
