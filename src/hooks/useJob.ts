@@ -11,15 +11,15 @@ import {
   callFetchJobById,
   callUpdateJob,
 } from "@/config/api";
-import { IJob } from "@/types/backend";
+import { IBackendRes, IJob, IModelPaginate } from "@/types/backend";
 import { message, notification } from "antd";
 
 export const useJob = (queryString: string | null = null) => {
   const queryClient = useQueryClient();
 
-  const query = useQuery({
+  const query = useQuery<IBackendRes<IModelPaginate<IJob>>>({
     queryKey: ["jobs", queryString],
-    queryFn: () => callFetchJob(queryString || ""),
+    queryFn: () => callFetchJob(queryString || "") as any,
     placeholderData: keepPreviousData,
     enabled: !!queryString,
   });
@@ -79,8 +79,8 @@ export const useJob = (queryString: string | null = null) => {
   });
 
   return {
-    jobs: query.data?.data?.data?.result ?? [],
-    meta: query.data?.data?.data?.meta ?? {
+    jobs: query.data?.data?.result ?? [],
+    meta: query.data?.data?.meta ?? {
       page: 1,
       pageSize: 10,
       total: 0,

@@ -10,15 +10,15 @@ import {
   callFetchRole,
   callUpdateRole,
 } from "@/config/api";
-import { IRole } from "@/types/backend";
+import { IBackendRes, IModelPaginate, IRole } from "@/types/backend";
 import { message, notification } from "antd";
 
 export const useRole = (queryString: string | null = null) => {
   const queryClient = useQueryClient();
 
-  const query = useQuery({
+  const query = useQuery<IBackendRes<IModelPaginate<IRole>>>({
     queryKey: ["roles", queryString],
-    queryFn: () => callFetchRole(queryString || ""),
+    queryFn: () => callFetchRole(queryString || "") as any,
     placeholderData: keepPreviousData,
     enabled: !!queryString,
   });
@@ -78,8 +78,8 @@ export const useRole = (queryString: string | null = null) => {
   });
 
   return {
-    roles: query.data?.data?.data?.result ?? [],
-    meta: query.data?.data?.data?.meta ?? {
+    roles: query.data?.data?.result ?? [],
+    meta: query.data?.data?.meta ?? {
       page: 1,
       pageSize: 10,
       total: 0,

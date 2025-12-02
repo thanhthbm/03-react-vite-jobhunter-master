@@ -4,15 +4,15 @@ import {
   callUpdateSubscriber,
   callGetSubscriberSkills,
 } from "@/config/api";
-import { ISubscribers } from "@/types/backend";
+import { IBackendRes, ISubscribers } from "@/types/backend";
 import { message, notification } from "antd";
 
 export const useSubscriber = () => {
   const queryClient = useQueryClient();
 
-  const query = useQuery({
+  const query = useQuery<IBackendRes<ISubscribers>>({
     queryKey: ["subscriber-skills"],
-    queryFn: () => callGetSubscriberSkills(),
+    queryFn: () => callGetSubscriberSkills() as any,
     retry: false,
   });
 

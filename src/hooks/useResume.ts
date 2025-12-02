@@ -10,13 +10,14 @@ import {
   callUpdateResumeStatus,
 } from "@/config/api";
 import { message, notification } from "antd";
+import { IBackendRes, IModelPaginate, IResume } from "@/types/backend";
 
 export const useResume = (queryString: string | null = null) => {
   const queryClient = useQueryClient();
 
-  const query = useQuery({
+  const query = useQuery<IBackendRes<IModelPaginate<IResume>>>({
     queryKey: ["resumes", queryString],
-    queryFn: () => callFetchResume(queryString || ""),
+    queryFn: () => callFetchResume(queryString || "") as any,
     placeholderData: keepPreviousData,
     enabled: !!queryString,
   });
@@ -58,8 +59,8 @@ export const useResume = (queryString: string | null = null) => {
   });
 
   return {
-    resumes: query.data?.data?.data?.result ?? [],
-    meta: query.data?.data?.data?.meta ?? {
+    resumes: query.data?.data?.result ?? [],
+    meta: query.data?.data?.meta ?? {
       page: 1,
       pageSize: 10,
       total: 0,

@@ -4,6 +4,7 @@ import {
   callFetchCompany,
   callUpdateCompany,
 } from "@/config/api";
+import { IBackendRes, ICompany, IModelPaginate } from "@/types/backend";
 import {
   keepPreviousData,
   useMutation,
@@ -15,9 +16,9 @@ import { message, notification } from "antd";
 export const useCompany = (queryString: string | null = null) => {
   const queryClient = useQueryClient();
 
-  const query = useQuery({
+  const query = useQuery<IBackendRes<IModelPaginate<ICompany>>>({
     queryKey: ["companies", queryString],
-    queryFn: () => callFetchCompany(queryString || ""),
+    queryFn: () => callFetchCompany(queryString || "") as any,
     placeholderData: keepPreviousData,
     enabled: !!queryString,
   });
@@ -99,19 +100,23 @@ export const useCompany = (queryString: string | null = null) => {
     },
   });
 
-
   return {
-        companies: query.data?.data?.data?.result ?? [],
-        meta: query.data?.data?.data?.meta ?? { page: 1, pageSize: 10, total: 0, pages: 0 },
-        isFetching: query.isFetching,
-        isLoading: query.isLoading,
-        
-        createCompany: createMutation.mutateAsync,
-        updateCompany: updateMutation.mutateAsync,
-        deleteCompany: deleteMutation.mutateAsync,
+    companies: query.data?.data?.result ?? [],
+    meta: query.data?.data?.meta ?? {
+      page: 1,
+      pageSize: 10,
+      total: 0,
+      pages: 0,
+    },
+    isFetching: query.isFetching,
+    isLoading: query.isLoading,
 
-        isCreating: createMutation.isPending,
-        isUpdating: updateMutation.isPending,
-        isDeleting: deleteMutation.isPending,
-    };
+    createCompany: createMutation.mutateAsync,
+    updateCompany: updateMutation.mutateAsync,
+    deleteCompany: deleteMutation.mutateAsync,
+
+    isCreating: createMutation.isPending,
+    isUpdating: updateMutation.isPending,
+    isDeleting: deleteMutation.isPending,
+  };
 };

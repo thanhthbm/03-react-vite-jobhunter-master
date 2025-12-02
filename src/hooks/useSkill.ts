@@ -11,13 +11,14 @@ import {
   callUpdateSkill,
 } from "@/config/api";
 import { message, notification } from "antd";
+import { IBackendRes, IModelPaginate, ISkill } from "@/types/backend";
 
 export const useSkill = (queryString: string | null = null) => {
   const queryClient = useQueryClient();
 
-  const query = useQuery({
+  const query = useQuery<IBackendRes<IModelPaginate<ISkill>>>({
     queryKey: ["skills", queryString],
-    queryFn: () => callFetchAllSkill(queryString || ""),
+    queryFn: () => callFetchAllSkill(queryString || "") as any,
     placeholderData: keepPreviousData,
     enabled: !!queryString,
   });
@@ -77,8 +78,8 @@ export const useSkill = (queryString: string | null = null) => {
   });
 
   return {
-    skills: query.data?.data?.data?.result ?? [],
-    meta: query.data?.data?.data?.meta ?? {
+    skills: query.data?.data?.result ?? [],
+    meta: query.data?.data?.meta ?? {
       page: 1,
       pageSize: 10,
       total: 0,

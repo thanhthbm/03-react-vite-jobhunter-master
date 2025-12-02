@@ -10,15 +10,15 @@ import {
   callFetchPermission,
   callUpdatePermission,
 } from "@/config/api";
-import { IPermission } from "@/types/backend";
+import { IBackendRes, IModelPaginate, IPermission } from "@/types/backend";
 import { message, notification } from "antd";
 
 export const usePermission = (queryString: string | null = null) => {
   const queryClient = useQueryClient();
 
-  const query = useQuery({
+  const query = useQuery<IBackendRes<IModelPaginate<IPermission>>>({
     queryKey: ["permissions", queryString],
-    queryFn: () => callFetchPermission(queryString || ""),
+    queryFn: () => callFetchPermission(queryString || "") as any,
     placeholderData: keepPreviousData,
     enabled: !!queryString,
   });
@@ -78,8 +78,8 @@ export const usePermission = (queryString: string | null = null) => {
   });
 
   return {
-    permissions: query.data?.data?.data?.result ?? [],
-    meta: query.data?.data?.data?.meta ?? {
+    permissions: query.data?.data?.result ?? [],
+    meta: query.data?.data?.meta ?? {
       page: 1,
       pageSize: 10,
       total: 0,

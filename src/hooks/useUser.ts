@@ -4,7 +4,7 @@ import {
   callFetchUser,
   callUpdateUser,
 } from "@/config/api";
-import { IUser } from "@/types/backend";
+import { IBackendRes, IModelPaginate, IUser } from "@/types/backend";
 import {
   keepPreviousData,
   useMutation,
@@ -16,9 +16,9 @@ import { message, notification } from "antd";
 export const useUser = (queryString: string | null = null) => {
   const queryClient = useQueryClient();
 
-  const query = useQuery({
+  const query = useQuery<IBackendRes<IModelPaginate<IUser>>>({
     queryKey: ["users", queryString],
-    queryFn: () => callFetchUser(queryString || ""),
+    queryFn: () => callFetchUser(queryString || "") as any,
     placeholderData: keepPreviousData,
     enabled: !!queryString,
   });
@@ -81,8 +81,8 @@ export const useUser = (queryString: string | null = null) => {
   });
 
   return {
-    users: query.data?.data.data?.result ?? [],
-    meta: query.data?.data?.data?.meta ?? {
+    users: query.data?.data?.result ?? [],
+    meta: query.data?.data?.meta ?? {
       page: 1,
       pageSize: 10,
       total: 0,
