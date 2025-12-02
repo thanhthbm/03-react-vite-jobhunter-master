@@ -15,11 +15,10 @@ import { Layout, Menu, Dropdown, Space, message, Avatar, Button } from "antd";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
 import { callLogout } from "config/api";
-import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import { isMobile } from "react-device-detect";
 import type { MenuProps } from "antd";
-import { setLogoutAction } from "@/redux/slice/accountSlide";
 import { ALL_PERMISSIONS } from "@/config/permissions";
+import { useAuth } from "@/context/auth.context";
 
 const { Content, Sider } = Layout;
 
@@ -28,15 +27,11 @@ const LayoutAdmin = () => {
 
   const [collapsed, setCollapsed] = useState(false);
   const [activeMenu, setActiveMenu] = useState("");
-  const user = useAppSelector((state) => state.account.user);
-
-  const permissions = useAppSelector(
-    (state) => state.account.user.role.permissions
-  );
+  const { user, logout } = useAuth();
+  const permissions = user?.role.permissions;
   const [menuItems, setMenuItems] = useState<MenuProps["items"]>([]);
 
   const navigate = useNavigate();
-  const dispatch = useAppDispatch();
 
   useEffect(() => {
     const ACL_ENABLE = import.meta.env.VITE_ACL_ENABLE;
@@ -151,7 +146,7 @@ const LayoutAdmin = () => {
   const handleLogout = async () => {
     const res = await callLogout();
     if (res && +res.statusCode === 200) {
-      dispatch(setLogoutAction({}));
+      logout();
       message.success("Đăng xuất thành công");
       navigate("/");
     }

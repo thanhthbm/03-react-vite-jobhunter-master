@@ -3,12 +3,12 @@ import {
   ProFormSelect,
   ProFormText,
 } from "@ant-design/pro-components";
-import { Col, Form, Row } from "antd"; // Bỏ message, notification
+import { Col, Form, Row } from "antd";
 import { isMobile } from "react-device-detect";
 import { IPermission } from "@/types/backend";
 import { ALL_MODULES } from "@/config/permissions";
 import { useEffect } from "react";
-import { usePermission } from "@/hooks/usePermission"; // IMPORT HOOK
+import { usePermission } from "@/hooks/usePermission";
 
 interface IProps {
   openModal: boolean;
@@ -22,7 +22,6 @@ const ModalPermission = (props: IProps) => {
   const { openModal, setOpenModal, reloadTable, dataInit, setDataInit } = props;
   const [form] = Form.useForm();
 
-  // GỌI HOOK
   const { createPermission, updatePermission, isCreating, isUpdating } =
     usePermission();
 
@@ -36,17 +35,14 @@ const ModalPermission = (props: IProps) => {
     const { name, apiPath, method, module } = valuesForm;
 
     if (dataInit?.id) {
-      // UPDATE
       const permission = { name, apiPath, method, module };
       await updatePermission({ id: dataInit.id, perm: permission });
       handleReset();
-      // React Query tự refresh, không cần gọi reloadTable() trừ khi muốn reset page
     } else {
-      // CREATE
       const permission = { name, apiPath, method, module };
       await createPermission(permission);
       handleReset();
-      reloadTable(); // Reset về trang 1
+      reloadTable();
     }
   };
 

@@ -35,7 +35,6 @@ const CompanyPage = () => {
     { skipNull: true, skipEmptyString: true }
   );
 
-
   const { companies, meta, isFetching, deleteCompany, isDeleting } =
     useCompany(queryStr);
 
@@ -44,7 +43,6 @@ const CompanyPage = () => {
       await deleteCompany(id);
     }
   };
-
 
   const handleTableChange = (pagination: any, filters: any, sorter: any) => {
     let sortBy = "";
@@ -89,7 +87,7 @@ const CompanyPage = () => {
     }
     setParams((prev) => ({
       ...prev,
-      current: 1, 
+      current: 1,
       filter: filterStr,
     }));
   };

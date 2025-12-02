@@ -37,6 +37,7 @@ const UserPage = () => {
   );
 
   const { users, meta, isFetching, deleteUser, isDeleting } = useUser(queryStr);
+  console.log("Users data:", users);
 
   const handleDeleteUser = async (id: string | undefined) => {
     if (id) await deleteUser(id);

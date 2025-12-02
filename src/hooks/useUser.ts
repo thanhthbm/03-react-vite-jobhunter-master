@@ -81,7 +81,7 @@ export const useUser = (queryString: string | null = null) => {
   });
 
   return {
-    users: query.data?.data?.data?.result ?? [],
+    users: query.data?.data.data?.result ?? [],
     meta: query.data?.data?.data?.meta ?? {
       page: 1,
       pageSize: 10,

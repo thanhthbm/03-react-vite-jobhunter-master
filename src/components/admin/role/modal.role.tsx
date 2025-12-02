@@ -17,8 +17,6 @@ import { IPermission, IRole } from "@/types/backend";
 import { CheckSquareOutlined } from "@ant-design/icons";
 import ModuleApi from "./module.api";
 import { useEffect } from "react";
-import { useAppDispatch, useAppSelector } from "@/redux/hooks";
-import { resetSingleRole } from "@/redux/slice/roleSlide";
 import { groupByPermission } from "@/config/utils";
 
 interface IProps {
@@ -42,7 +40,6 @@ const ModalRole = (props: IProps) => {
     singleRole,
     setSingleRole,
   } = props;
-  const dispatch = useAppDispatch();
   const [form] = Form.useForm();
 
   const submitRole = async (valuesForm: any) => {
@@ -77,7 +74,6 @@ const ModalRole = (props: IProps) => {
         });
       }
     } else {
-      //create
       const role = {
         name,
         description,
