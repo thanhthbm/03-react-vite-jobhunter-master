@@ -10,29 +10,17 @@ import {
   ProFormText,
   ProFormTextArea,
 } from "@ant-design/pro-components";
-import {
-  Col,
-  ConfigProvider,
-  Form,
-  Modal,
-  Row,
-  Upload,
-  message,
-  notification,
-} from "antd";
+import { Col, ConfigProvider, Form, Modal, Row, Upload, message } from "antd";
 import "styles/reset.scss";
 import { isMobile } from "react-device-detect";
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
 import { useEffect, useState } from "react";
-import {
-  callCreateCompany,
-  callUpdateCompany,
-  callUploadSingleFile,
-} from "@/config/api";
 import { ICompany } from "@/types/backend";
 import { v4 as uuidv4 } from "uuid";
 import enUS from "antd/lib/locale/en_US";
+import { useUpload } from "@/hooks/useUpload";
+import { useCompany } from "@/hooks/useCompany";
 
 interface IProps {
   openModal: boolean;
@@ -55,79 +43,68 @@ interface ICompanyLogo {
 const ModalCompany = (props: IProps) => {
   const { openModal, setOpenModal, reloadTable, dataInit, setDataInit } = props;
 
-  //modal animation
-  const [animation, setAnimation] = useState<string>("open");
+  // Hooks
+  const { uploadFile, isUploading } = useUpload();
+  const { createCompany, updateCompany, isCreating, isUpdating } = useCompany();
 
-  const [loadingUpload, setLoadingUpload] = useState<boolean>(false);
+  // State
+  const [animation, setAnimation] = useState<string>("open");
   const [dataLogo, setDataLogo] = useState<ICompanyLogo[]>([]);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewImage, setPreviewImage] = useState("");
   const [previewTitle, setPreviewTitle] = useState("");
-
   const [value, setValue] = useState<string>("");
+
   const [form] = Form.useForm();
 
   useEffect(() => {
-    if (dataInit?.id && dataInit?.description) {
-      setValue(dataInit.description);
+    if (dataInit?.id) {
+      setValue(dataInit.description ?? "");
       form.setFieldsValue({
         name: dataInit.name,
         address: dataInit.address,
       });
-      setDataLogo([
-        {
-          name: dataInit.logo,
-          uid: uuidv4(),
-        },
-      ]);
+      if (dataInit.logo) {
+        setDataLogo([
+          {
+            name: dataInit.logo,
+            uid: uuidv4(),
+          },
+        ]);
+      }
     }
   }, [dataInit]);
 
   const submitCompany = async (valuesForm: ICompanyForm) => {
     const { name, address } = valuesForm;
-
     if (dataLogo.length === 0) {
       message.error("Vui lòng upload ảnh Logo");
       return;
     }
 
     if (dataInit?.id) {
-      //update
-      const res = await callUpdateCompany(
-        dataInit.id,
+      // Update
+      await updateCompany({
+        id: dataInit.id,
         name,
         address,
-        value,
-        dataLogo[0].name
-      );
-      if (res.data) {
-        message.success("Cập nhật company thành công");
-        handleReset();
-        reloadTable();
-      } else {
-        notification.error({
-          message: "Có lỗi xảy ra",
-          description: res.message,
-        });
-      }
+        description: value,
+        logo: dataLogo[0].name,
+      });
+      handleReset();
+      // Không bắt buộc gọi reloadTable() nếu chỉ cần refresh data (hook đã lo),
+      // nhưng nếu muốn reset về trang 1 thì giữ lại.
+      // reloadTable();
     } else {
-      //create
-      const res = await callCreateCompany(
+      // Create
+      await createCompany({
         name,
         address,
-        value,
-        dataLogo[0].name
-      );
-      if (res.data) {
-        message.success("Thêm mới company thành công");
-        handleReset();
-        reloadTable();
-      } else {
-        notification.error({
-          message: "Có lỗi xảy ra",
-          description: res.message,
-        });
-      }
+        description: value,
+        logo: dataLogo[0].name,
+      });
+      handleReset();
+      reloadTable(); // Reset về trang 1 sau khi tạo mới
     }
   };
 
@@ -135,8 +112,9 @@ const ModalCompany = (props: IProps) => {
     form.resetFields();
     setValue("");
     setDataInit(null);
+    setDataLogo([]);
 
-    //add animation when closing modal
+    // Add animation when closing modal
     setAnimation("close");
     await new Promise((r) => setTimeout(r, 400));
     setOpenModal(false);
@@ -183,35 +161,20 @@ const ModalCompany = (props: IProps) => {
     return isJpgOrPng && isLt2M;
   };
 
-  const handleChange = (info: any) => {
-    if (info.file.status === "uploading") {
-      setLoadingUpload(true);
-    }
-    if (info.file.status === "done") {
-      setLoadingUpload(false);
-    }
-    if (info.file.status === "error") {
-      setLoadingUpload(false);
-      message.error(
-        info?.file?.error?.event?.message ?? "Đã có lỗi xảy ra khi upload file."
-      );
-    }
-  };
-
+  // Sử dụng useUpload hook
   const handleUploadFileLogo = async ({ file, onSuccess, onError }: any) => {
-    const res = await callUploadSingleFile(file, "company");
-    if (res && res.data) {
+    try {
+      const fileName = await uploadFile({ file, folder: "company" });
       setDataLogo([
         {
-          name: res.data.fileName,
+          name: fileName,
           uid: uuidv4(),
         },
       ]);
       if (onSuccess) onSuccess("ok");
-    } else {
+    } catch (error) {
       if (onError) {
         setDataLogo([]);
-        const error = new Error(res.message);
         onError({ event: error });
       }
     }
@@ -248,6 +211,7 @@ const ModalCompany = (props: IProps) => {
               ),
               submitButtonProps: {
                 icon: <CheckSquareOutlined />,
+                loading: isCreating || isUpdating, // Loading state từ hook
               },
               searchConfig: {
                 resetText: "Hủy",
@@ -291,15 +255,15 @@ const ModalCompany = (props: IProps) => {
                       multiple={false}
                       customRequest={handleUploadFileLogo}
                       beforeUpload={beforeUpload}
-                      onChange={handleChange}
+                      // onChange={handleChange} // Không cần handleChange nữa vì hook đã xử lý
                       onRemove={(file) => handleRemoveFile(file)}
                       onPreview={handlePreview}
                       defaultFileList={
-                        dataInit?.id
+                        dataInit?.id && dataInit?.logo
                           ? [
                               {
                                 uid: uuidv4(),
-                                name: dataInit?.logo ?? "",
+                                name: dataInit?.logo,
                                 status: "done",
                                 url: `${
                                   import.meta.env.VITE_BACKEND_URL
@@ -310,7 +274,7 @@ const ModalCompany = (props: IProps) => {
                       }
                     >
                       <div>
-                        {loadingUpload ? <LoadingOutlined /> : <PlusOutlined />}
+                        {isUploading ? <LoadingOutlined /> : <PlusOutlined />}
                         <div style={{ marginTop: 8 }}>Upload</div>
                       </div>
                     </Upload>
@@ -334,7 +298,6 @@ const ModalCompany = (props: IProps) => {
 
               <ProCard
                 title="Miêu tả"
-                // subTitle="mô tả công ty"
                 headStyle={{ color: "#d81921" }}
                 style={{ marginBottom: 20 }}
                 headerBordered

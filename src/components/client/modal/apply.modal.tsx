@@ -13,11 +13,12 @@ import {
 } from "antd";
 import { useNavigate } from "react-router-dom";
 import enUS from "antd/lib/locale/en_US";
-import { UploadOutlined } from "@ant-design/icons";
+import { UploadOutlined, LoadingOutlined } from "@ant-design/icons"; // Thêm LoadingOutlined
 import type { UploadProps } from "antd";
-import { callCreateResume, callUploadSingleFile } from "@/config/api";
+import { callCreateResume } from "@/config/api";
 import { useState } from "react";
 import { useAuth } from "@/context/auth.context";
+import { useUpload } from "@/hooks/useUpload"; // Import Hook
 
 interface IProps {
   isModalOpen: boolean;
@@ -28,8 +29,9 @@ interface IProps {
 const ApplyModal = (props: IProps) => {
   const { isModalOpen, setIsModalOpen, jobDetail } = props;
   const { isAuthenticated, user } = useAuth();
-  const [urlCV, setUrlCV] = useState<string>("");
+  const { uploadFile, isUploading } = useUpload(); // Sử dụng hook
 
+  const [urlCV, setUrlCV] = useState<string>("");
   const navigate = useNavigate();
 
   const handleOkButton = async () => {
@@ -42,7 +44,6 @@ const ApplyModal = (props: IProps) => {
       setIsModalOpen(false);
       navigate(`/login?callback=${window.location.href}`);
     } else {
-      //todo
       if (jobDetail) {
         const res = await callCreateResume(
           urlCV,
@@ -51,7 +52,8 @@ const ApplyModal = (props: IProps) => {
           user?.id as string
         );
         if (res.data) {
-          message.success("Rải CV thành công!");
+          message.success("Nộp CV thành công!");
+          setUrlCV("");
           setIsModalOpen(false);
         } else {
           notification.error({
@@ -68,14 +70,14 @@ const ApplyModal = (props: IProps) => {
     multiple: false,
     accept: "application/pdf,application/msword, .doc, .docx, .pdf",
     async customRequest({ file, onSuccess, onError }: any) {
-      const res = await callUploadSingleFile(file, "resume");
-      if (res && res.data) {
-        setUrlCV(res.data.fileName);
+      try {
+        // Sử dụng hook uploadFile
+        const fileName = await uploadFile({ file, folder: "resume" });
+        setUrlCV(fileName);
         if (onSuccess) onSuccess("ok");
-      } else {
+      } catch (error) {
         if (onError) {
           setUrlCV("");
-          const error = new Error(res.message);
           onError({ event: error });
         }
       }
@@ -87,10 +89,8 @@ const ApplyModal = (props: IProps) => {
       if (info.file.status === "done") {
         message.success(`${info.file.name} file uploaded successfully`);
       } else if (info.file.status === "error") {
-        message.error(
-          info?.file?.error?.event?.message ??
-            "Đã có lỗi xảy ra khi upload file."
-        );
+        // Hook đã xử lý notification error, ở đây chỉ cần log hoặc bỏ qua
+        // message.error(...)
       }
     },
   };
@@ -103,7 +103,7 @@ const ApplyModal = (props: IProps) => {
         onOk={() => handleOkButton()}
         onCancel={() => setIsModalOpen(false)}
         maskClosable={false}
-        okText={isAuthenticated ? "Rải CV Nào " : "Đăng Nhập Nhanh"}
+        okText={isAuthenticated ? "Nộp CV Nào " : "Đăng Nhập Nhanh"}
         cancelButtonProps={{ style: { display: "none" } }}
         destroyOnClose={true}
       >
@@ -143,9 +143,18 @@ const ApplyModal = (props: IProps) => {
                       ]}
                     >
                       <Upload {...propsUpload}>
-                        <Button icon={<UploadOutlined />}>
-                          Tải lên CV của bạn ( Hỗ trợ *.doc, *.docx, *.pdf, and
-                          &lt; 5MB )
+                        <Button
+                          icon={
+                            isUploading ? (
+                              <LoadingOutlined />
+                            ) : (
+                              <UploadOutlined />
+                            )
+                          }
+                        >
+                          {isUploading
+                            ? "Đang tải lên..."
+                            : "Tải lên CV ( *.doc, *.docx, *.pdf, < 5MB )"}
                         </Button>
                       </Upload>
                     </ProForm.Item>
@@ -156,7 +165,7 @@ const ApplyModal = (props: IProps) => {
           </div>
         ) : (
           <div>
-            Bạn chưa đăng nhập hệ thống. Vui lòng đăng nhập để có thể "Rải CV"
+            Bạn chưa đăng nhập hệ thống. Vui lòng đăng nhập để có thể nộp
             bạn nhé -.-
           </div>
         )}

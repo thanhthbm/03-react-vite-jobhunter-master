@@ -41,6 +41,7 @@ const ResumePage = () => {
   const { resumes, meta, isFetching, deleteResume, isDeleting } =
     useResume(queryStr);
 
+  console.log(resumes);
   const handleDeleteResume = async (id: string | undefined) => {
     if (id) await deleteResume(id);
   };
@@ -142,6 +143,24 @@ const ResumePage = () => {
         </>
       ),
       hideInSearch: true,
+    },
+    {
+      title: "CV",
+      dataIndex: "url",
+      hideInSearch: true,
+      render: (text, record) => {
+        return (
+          <a
+            href={`${import.meta.env.VITE_BACKEND_URL}/storage/resume/${
+              record?.url
+            }`}
+            target="_blank"
+            rel="noreferrer"
+          >
+            Xem file
+          </a>
+        );
+      },
     },
     {
       title: "Actions",
