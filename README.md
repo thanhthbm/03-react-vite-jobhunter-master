@@ -1,35 +1,47 @@
-# React Vite Jobhunter template
-Template này được sử dụng cho series Java Spring Restful (dự án jobHunter) của tác giả Hỏi Dân IT (Eric)
 
-### Môi trường chạy dự án: Node.js v16.20.0
-https://nodejs.org/download/release/v16.20.0/
+# JobHunter Frontend 🚀
 
-## Về tác giả
-Mọi thông tin về Tác giả Hỏi Dân IT, các bạn có thể tìm kiếm tại đây:
+The frontend client for the JobHunter recruitment system, built with **React (Vite) + TypeScript**.
 
-Website chính thức: https://hoidanit.vn/
+> **Note:** This codebase has been refactored from Redux to **TanStack Query + Context API**.
 
-Youtube “Hỏi Dân IT” : https://www.youtube.com/@hoidanit
+## 🛠 Tech Stack
+* **Core:** React 18, TypeScript, Vite.
+* **State & Data:** TanStack Query (v5), Context API, Axios.
+* **UI:** Ant Design, ProComponents, SCSS.
+* **Real-time:** WebSocket (@stomp/stompjs).
 
-Tiktok “Hỏi Dân IT” :  https://www.tiktok.com/@hoidanit
+## ⚙️ Prerequisites
+* **Node.js** (v16 or higher).
+* **JobHunter Backend** running (default: `http://localhost:8080`).
 
-Fanpage “Hỏi Dân IT” : https://www.facebook.com/askITwithERIC/
+## 🚀 How to Run
 
-Udemy Hỏi Dân IT: https://www.udemy.com/user/eric-7039/
+### 1. Install Dependencies
+Open the terminal in the project root and run:
+```bash
+npm install
+````
 
-===
+### 2\. Environment Setup
 
-Các bước cài đặt: (chế độ development)
-1. clone code
-2. cài đặt thư viện: npm i
-3. Update file .env.development (nếu cần thiết)
-4. Chạy dự án: npm run dev
+Ensure the `.env` (or `.env.development`) file exists in the root directory:
 
-===
+```env
+PORT=3000
+VITE_BACKEND_URL=http://localhost:8080
+VITE_ACL_ENABLE=true
+```
 
-Cách chạy tại chế độ production:
-1. clone code
-2. cài đặt thư viện: npm i
-3. Update file .env.production (nếu cần thiết)
-4. Build dự án: npm run build
-5. Chạy dự án: npm run preview
+### 3\. Start the App
+
+```bash
+npm run dev
+```
+
+The application will run at: `http://localhost:3000`
+
+## 🔑 Default Admin Credentials
+
+  * **Username:** `admin@gmail.com`
+  * **Password:** `123456`
