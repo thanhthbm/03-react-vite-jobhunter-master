@@ -326,3 +326,15 @@ export const callFetchSubscriber = (query: string) => {
 export const callFetchSubscriberById = (id: string) => {
   return axios.get<IBackendRes<ISubscribers>>(`/api/v1/subscribers/${id}`);
 };
+
+/**
+ * 
+Module Notifications
+ */
+export const callFetchNotifications = () => {
+  return axios.get<IBackendRes<any[]>>("/api/v1/notifications");
+};
+
+export const callMarkReadNotification = (id: number) => {
+  return axios.put<IBackendRes<any>>(`/api/v1/notifications/${id}`);
+};

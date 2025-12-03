@@ -18,6 +18,7 @@ import { Link } from "react-router-dom";
 import { callLogout } from "@/config/api";
 import ManageAccount from "./modal/manage.account";
 import { useAuth } from "@/context/auth.context";
+import NotificationBell from "./header/notification.bell";
 
 const Header = (props: any) => {
   const navigate = useNavigate();
@@ -130,18 +131,23 @@ const Header = (props: any) => {
                   {isAuthenticated === false ? (
                     <Link to={"/login"}>Đăng Nhập</Link>
                   ) : (
-                    <Dropdown
-                      menu={{ items: itemsDropdown }}
-                      trigger={["click"]}
+                    <div
+                      style={{ display: "flex", gap: 20, alignItems: "center" }}
                     >
-                      <Space style={{ cursor: "pointer" }}>
-                        <span>Welcome {user?.name}</span>
-                        <Avatar>
-                          {" "}
-                          {user?.name?.substring(0, 2)?.toUpperCase()}{" "}
-                        </Avatar>
-                      </Space>
-                    </Dropdown>
+                      <NotificationBell />
+                      <Dropdown
+                        menu={{ items: itemsDropdown }}
+                        trigger={["click"]}
+                      >
+                        <Space style={{ cursor: "pointer" }}>
+                          <span>Welcome {user?.name}</span>
+                          <Avatar>
+                            {" "}
+                            {user?.name?.substring(0, 2)?.toUpperCase()}{" "}
+                          </Avatar>
+                        </Space>
+                      </Dropdown>
+                    </div>
                   )}
                 </div>
               </div>

@@ -83,6 +83,18 @@ export const ALL_PERMISSIONS = {
       module: "USERS",
     },
   },
+  NOTIFICATIONS: {
+    GET_PAGINATE: {
+      method: "GET",
+      apiPath: "/api/v1/notifications",
+      module: "NOTIFICATIONS",
+    },
+    UPDATE: {
+      method: "PUT",
+      apiPath: "/api/v1/notifications/{id}",
+      module: "NOTIFICATIONS",
+    },
+  },
 };
 
 export const ALL_MODULES = {
@@ -94,4 +106,5 @@ export const ALL_MODULES = {
   ROLES: "ROLES",
   USERS: "USERS",
   SUBSCRIBERS: "SUBSCRIBERS",
+  NOTIFICATIONS: "NOTIFICATIONS",
 };
